@@ -4,7 +4,7 @@
 The image generation endpoint officially accepts URL or Data URI inputs.
 For video reference media the documented contract is a public HTTPS URL;
 inline Data URIs for audio/keyframes are an empirically accepted fallback
-(see the skill SKILL.md caveats), not a documented guarantee.
+(see the module MODULE.md caveats), not a documented guarantee.
 """
 import base64
 import mimetypes

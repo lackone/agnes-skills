@@ -20,4 +20,4 @@ python examples/batch-images.py --request prompts.json
 
 参数均为可选位置参数，缺省走内置演示；`-h/--help` 查看参数说明。
 
-环境变量 `AGNES_API_KEY`、`AGNES_BASE_URL` 可在 `.env` 或进程环境中配置（模板见套件根目录 `.env.example`；单独拷贝时直接设置环境变量即可）。详细参数见 [SKILL.md](SKILL.md)。
+环境变量 `AGNES_API_KEY`、`AGNES_BASE_URL` 可在 `.env` 或进程环境中配置（模板见套件根目录 `.env.example`；单独拷贝时直接设置环境变量即可）。详细参数见 [MODULE.md](MODULE.md)。

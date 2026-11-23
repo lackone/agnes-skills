@@ -1,6 +1,6 @@
 # agnes-skills
 
-本仓库把 Agnes 开放接口按模型拆成五个独立 Skill；整体部署即可调用全部能力，也可以只挑需要的子目录放进 Agent 的 skills 目录。
+本仓库把 Agnes 开放接口按模型组织成五个内部模块，统一由 `agnes-skills` 主入口调度：主入口判断诉求类型、选定模型后，再进入对应子目录运行脚本，不需要把五个模块作为独立技能分别触发。整体部署即可调用全部能力；打包时也可只挑需要的子目录分发。
 
 ## 模型一览
 
@@ -20,7 +20,7 @@
 
 ### 单独安装
 
-每个子目录自包含 `examples/`（含 `load_env.py` 及其他本地共享模块），只保留需要的目录，放入 Agent 的 skills 目录即可。最小分发单元是整个子目录（`SKILL.md` + `README.md` + `examples/` 全部 `.py`）；不要只拷贝单个脚本，缺少同目录共享模块会导入失败。`.env`、`output/`、`__pycache__/` 与下载的媒体文件不随包分发。
+每个子目录自包含 `examples/`（含 `load_env.py` 及其他本地共享模块），只保留需要的目录，放入 Agent 的 skills 目录即可。最小分发单元是整个子目录（`MODULE.md` + `README.md` + `examples/` 全部 `.py`）；不要只拷贝单个脚本，缺少同目录共享模块会导入失败。`.env`、`output/`、`__pycache__/` 与下载的媒体文件不随包分发。
 
 ```text
 agnes-skills/
@@ -29,23 +29,23 @@ agnes-skills/
 ├── .env.example
 ├── .gitignore
 ├── agnes-3.0-flash/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 ├── agnes-3.0-pro/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 ├── agnes-image-2.5-flash/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 ├── agnes-video-2.5/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 └── agnes-video-2.5-flash/
-    ├── SKILL.md
+    ├── MODULE.md
     ├── README.md
     └── examples/
 ```
@@ -54,7 +54,7 @@ agnes-skills/
 
 - **Python**：3.10 或更高版本；脚本只用标准库（`argparse`、`json`、`os`、`sys`、`threading`、`urllib`、`base64`、`mimetypes`、`concurrent.futures` 等）。
 - **依赖**：无第三方包，不需要创建虚拟环境，也不需要 `pip install`；`requirements.txt` 仅作打包/审计占位，不声明任何外部依赖。
-- **运行方式**：在对应技能目录下执行 `python examples/<脚本>.py [参数]`；脚本目录自动加入导入路径，共享模块随目录携带，子技能之间没有运行时依赖。
+- **运行方式**：在对应技能目录下执行 `python examples/<脚本>.py [参数]`；脚本目录自动加入导入路径，共享模块随目录携带，子模块之间没有运行时依赖。
 - **网络**：出站 HTTPS 需可达默认端点 `https://apihub.agnes-ai.com/v1`；走自建或代理网关时用 `AGNES_BASE_URL` 覆盖。
 - **产物**：生成结果下载到当前工作目录的 `output/`；`.env`、`output/`、Python 缓存与媒体文件已在 `.gitignore` 排除。
 

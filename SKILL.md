@@ -1,24 +1,29 @@
 ---
 name: agnes-skills
 description: |
-Agnes AI 模型全能力套件 Skill。
-包含对话/推理模型、图像生成、视频生成五类能力。
-子 Skill 列表：
-- agnes-3.0-flash（Agent 编程、工具编排、Thinking）
-- agnes-3.0-pro（长上下文推理、专业文档分析、编码）
-- agnes-image-2.5-flash（文生图、图生图、多图合成）
-- agnes-video-2.5（文生视频、首尾帧、图片/音频/视频参考）
-- agnes-video-2.5-flash（轻量视频生成，固定 720P）
-触发词：agnes、聊天、对话、推理、工具调用、thinking、生图、图像生成、图生图、视频生成、文生视频、首尾帧、图片参考、音频参考。
+Agnes AI 全能力套件，统一入口为 agnes-skills。
+主入口按诉求分发到内部模块：3.0 Flash / Pro 对话推理、Image 2.5 Flash 生图、Video 2.5 / 2.5 Flash 生视频；五个子目录是内部模块，不需要作为独立技能分别触发。
+触发词：agnes、聊天、对话、推理、工具调用、thinking、生图、图像生成、图生图、多图合成、视频生成、文生视频、首尾帧、图片参考、音频参考。
 ---
 
 # agnes-skills
 
-> **部署方式：** 五个子目录各自独立，可整库安装，也可只复制需要的那个目录；每个子 Skill 自带 `SKILL.md` 与 `examples/*.py`（含 `load_env.py`），跨目录之间没有运行时依赖。全部脚本只用 Python 3.10+ 标准库，无第三方依赖，不需要虚拟环境或 `pip install`。
+> **部署方式：** 打包时五个子目录各自自包含（自带 `MODULE.md` 与 `examples/*.py`，含 `load_env.py`），可整库安装，也可只复制需要的目录；运行时统一由本入口调度，跨目录之间没有运行时依赖。全部脚本只用 Python 3.10+ 标准库，无第三方依赖，不需要虚拟环境或 `pip install`。
+
+## 调度方式（唯一入口）
+
+- 本套件对外只有 `agnes-skills` 一个入口；下面五个目录是**内部能力模块**，不是五个需要单独触发、单独调用的技能。
+- 主入口调用流程：
+  1. 判断用户诉求类型：对话 / 推理 / 工具调用、生图、生视频；
+  2. 按「默认路由与默认参数」表选定模型；
+  3. 进入对应子目录，先读该目录 `MODULE.md`，取端点、请求字段、限制与提示词规范；
+  4. 运行该目录 `examples/` 下对应脚本；
+  5. 结果按本文件「交付顺序」与「错误处理与重试」口径返回。
+- 子目录的 `README.md` / `MODULE.md` 仅供主入口调度时查阅，不直接对用户单独展示。
 
 ## 概述
 
-| 子 Skill | 模型 ID | 核心能力 | 主要端点 |
+| 子模块 | 模型 ID | 核心能力 | 主要端点 |
 | --- | --- | --- | --- |
 | `agnes-3.0-flash` | `agnes-3.0-flash` | Agent 编程、工具编排、图像理解、Thinking | `/v1/chat/completions`、`/v1/responses`、`/v1/messages` |
 | `agnes-3.0-pro` | `agnes-3.0-pro` | 长上下文推理、专业文档分析、编码 | 同上 |
@@ -56,7 +61,7 @@ Agnes AI 模型全能力套件 Skill。
 
 ## 快速开始
 
-示例脚本放在各子 Skill 的 `examples/` 目录，只用 Python 3.10+ 标准库；可在命令行覆盖输入，不带参数时运行内置演示。单结果脚本参数均为可选位置参数（带默认值），批量脚本使用命名选项；所有脚本均可加 `-h/--help` 查看参数说明。
+示例脚本放在各子模块的 `examples/` 目录，只用 Python 3.10+ 标准库；可在命令行覆盖输入，不带参数时运行内置演示。单结果脚本参数均为可选位置参数（带默认值），批量脚本使用命名选项；所有脚本均可加 `-h/--help` 查看参数说明。
 
 ```bash
 # 基础对话
@@ -79,15 +84,15 @@ API Key 从环境变量或 `.env` 自动加载，无需手动 export；配置方
 - 视频参考素材官方契约为公开 HTTPS URL；本地图片/音频转 Data URI 内联是实测可用的回退方式，并非文档保证；被 400 拒绝时改回公共 URL。
 - 参考视频（仅标准版）只接受 URL 对象，不做内联。
 
-详见各视频子 Skill 的 `SKILL.md`。
+详见各视频子模块的 `MODULE.md`。
 
-## 各子 Skill 文档
+## 内部模块文档（主入口调度时查阅）
 
-- [agnes-3.0-flash](./agnes-3.0-flash/SKILL.md)
-- [agnes-3.0-pro](./agnes-3.0-pro/SKILL.md)
-- [agnes-image-2.5-flash](./agnes-image-2.5-flash/SKILL.md)
-- [agnes-video-2.5](./agnes-video-2.5/SKILL.md)
-- [agnes-video-2.5-flash](./agnes-video-2.5-flash/SKILL.md)
+- [agnes-3.0-flash](./agnes-3.0-flash/MODULE.md)
+- [agnes-3.0-pro](./agnes-3.0-pro/MODULE.md)
+- [agnes-image-2.5-flash](./agnes-image-2.5-flash/MODULE.md)
+- [agnes-video-2.5](./agnes-video-2.5/MODULE.md)
+- [agnes-video-2.5-flash](./agnes-video-2.5-flash/MODULE.md)
 
 ## 文件结构
 
@@ -99,23 +104,23 @@ agnes-skills/
 ├── .env.example                 # API Key 模板（复制为 .env）
 ├── .gitignore
 ├── agnes-3.0-flash/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 ├── agnes-3.0-pro/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 ├── agnes-image-2.5-flash/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 ├── agnes-video-2.5/
-│   ├── SKILL.md
+│   ├── MODULE.md
 │   ├── README.md
 │   └── examples/
 └── agnes-video-2.5-flash/
-    ├── SKILL.md
+    ├── MODULE.md
     ├── README.md
     └── examples/
 ```
