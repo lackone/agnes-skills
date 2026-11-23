@@ -2,10 +2,12 @@
 """文生视频（固定 720P）：agnes-video-2.5-flash
 
 默认 16:9、12 秒；只回 URL，下载由独立 download.py 进程完成。
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
 
 用法：python text-to-video.py [提示词] [时长] [画幅]
 """
 import argparse
+import json
 import sys
 
 import video_common
@@ -23,17 +25,13 @@ def main():
     MODEL = "agnes-video-2.5-flash"
 
     args = parse_args()
-    prompt = args.prompt
-    seconds = args.seconds
-    ratio = args.ratio
-
     payload = {
         "model": MODEL,
-        "prompt": prompt,
+        "prompt": args.prompt,
         "mode": "text",
-        "seconds": seconds,
+        "seconds": args.seconds,
         "size": "720P",
-        "aspect_ratio": ratio,
+        "aspect_ratio": args.ratio,
     }
 
     video_id, _ = video_common.submit(payload)
@@ -41,11 +39,11 @@ def main():
     url = video_common.final_url(final)
 
     if final.get("status") != "completed" or not url:
-        print("[失败] 视频未完成：", final.get("error"))
+        print(json.dumps({"ok": False, "error": final.get("error") or "视频未完成"}, ensure_ascii=False))
         sys.exit(1)
 
-    print("[完成] 视频已生成")
-    print(f"视频地址：{url}")
+    print(json.dumps({"ok": True, "url": url, "video_id": video_id}, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     main()

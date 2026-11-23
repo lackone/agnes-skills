@@ -2,6 +2,7 @@
 """图生图：agnes-image-2.5-flash
 
 输入可为本地图片路径、公共 HTTPS URL 或 Data URI；本地文件会被读成 Data URI 内联提交。
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
 
 用法：python image-to-image.py [输入图片] [提示词] [尺寸] [比例]
 """
@@ -29,33 +30,32 @@ def main():
     api_key = load_env.api_key()
     base = load_env.base_url()
 
-    source = args.source
-    prompt = args.prompt
-    size = args.size
-    ratio = args.ratio
-
-    source_uri = media_input.prepare_image(source)
+    source_uri = media_input.prepare_image(args.source)
 
     payload = {
         "model": "agnes-image-2.5-flash",
-        "prompt": prompt,
-        "size": size,
-        "ratio": ratio,
+        "prompt": args.prompt,
+        "size": args.size,
+        "ratio": args.ratio,
         "extra_body": {
             "image": [source_uri],
             "response_format": "url",
         },
     }
 
-    result = http_retry.post_json(base, "/images/generations", payload, api_key, timeout=360)
+    try:
+        result = http_retry.post_json(base, "/images/generations", payload, api_key, timeout=360)
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
+        sys.exit(1)
 
-    print(json.dumps(result, indent=2, ensure_ascii=False))
     image_url = (result.get("data") or [{}])[0].get("url")
     if not image_url:
-        print("[失败] 未返回图片地址")
+        print(json.dumps({"ok": False, "error": "未返回图片地址"}, ensure_ascii=False))
         sys.exit(1)
-    print("[完成] 图生图结束")
-    print(f"图片地址：{image_url}")
+
+    print(json.dumps({"ok": True, "url": image_url}, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """按 video_id 查询已有任务：agnes-video-2.5
 
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
+
 用法：python query-video.py <video_id>
 """
 import argparse
+import json
 import sys
 
 import video_common
@@ -23,11 +26,11 @@ def main():
     url = video_common.final_url(final)
 
     if final.get("status") == "completed" and url:
-        print("[完成] 任务已结束")
-        print(f"视频地址：{url}")
+        print(json.dumps({"ok": True, "url": url, "video_id": video_id}, ensure_ascii=False))
     else:
-        print("[失败] 任务未完成：", final.get("error"))
+        print(json.dumps({"ok": False, "error": final.get("error") or "任务未完成"}, ensure_ascii=False))
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

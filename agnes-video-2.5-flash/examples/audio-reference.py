@@ -3,10 +3,12 @@
 
 音频可为本地路径、公共 HTTPS URL 或 Data URI；本地文件会被读成 Data URI 内联提交。
 多段音频用英文逗号分隔。注意：音频只参考节奏、氛围与动作节拍，不克隆音色、口音，也不承担台词配音。
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
 
 用法：python audio-reference.py [音频1,音频2,...] [提示词] [时长] [画幅]
 """
 import argparse
+import json
 import sys
 
 import media_input
@@ -27,21 +29,18 @@ def main():
 
     args = parse_args()
     sources = [s.strip() for s in args.sources.split(",") if s.strip()]
-    prompt = args.prompt
-    seconds = args.seconds
-    ratio = args.ratio
-
     audios = [media_input.prepare_audio(item.strip()) for item in sources if item.strip()]
     if len(audios) > 3:
-        raise SystemExit("Flash 模式参考音频最多 3 段")
+        print(json.dumps({"ok": False, "error": "Flash 模式参考音频最多 3 段"}, ensure_ascii=False))
+        sys.exit(1)
 
     payload = {
         "model": MODEL,
-        "prompt": prompt,
+        "prompt": args.prompt,
         "mode": "reference",
-        "seconds": seconds,
+        "seconds": args.seconds,
         "size": "720P",
-        "aspect_ratio": ratio,
+        "aspect_ratio": args.ratio,
         "audios": audios,
     }
 
@@ -50,11 +49,11 @@ def main():
     url = video_common.final_url(final)
 
     if final.get("status") == "completed" and url:
-        print("[完成] 视频已生成")
-        print(f"视频地址：{url}")
+        print(json.dumps({"ok": True, "url": url, "video_id": video_id}, ensure_ascii=False))
     else:
-        print("[失败] 视频未完成：", final.get("error"))
+        print(json.dumps({"ok": False, "error": final.get("error") or "视频未完成"}, ensure_ascii=False))
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

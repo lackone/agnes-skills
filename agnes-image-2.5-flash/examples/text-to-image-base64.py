@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""文生图（Base64 输出）：agnes-image-2.5-flash
+"""文生图（Base64 输出，直落盘）：agnes-image-2.5-flash
+
+stdout 仅输出一个结果 JSON（含本地 path）；进度与提示走 stderr。
 
 用法：python text-to-image-base64.py [提示词] [尺寸]
 """
 import argparse
 import base64
-import sys
 import json
 import os
+import sys
 import time
 
 import http_retry
@@ -27,32 +29,31 @@ def main():
     api_key = load_env.api_key()
     base = load_env.base_url()
 
-    prompt = args.prompt
-    size = args.size
-
     payload = {
         "model": "agnes-image-2.5-flash",
-        "prompt": prompt,
-        "size": size,
+        "prompt": args.prompt,
+        "size": args.size,
         "return_base64": True,
     }
 
-    result = http_retry.post_json(base, "/images/generations", payload, api_key, timeout=360)
+    try:
+        result = http_retry.post_json(base, "/images/generations", payload, api_key, timeout=360)
+        item = (result.get("data") or [{}])[0]
+        b64 = item.get("b64_json")
+        if not b64:
+            raise ValueError("未返回 Base64 图像")
 
-    item = (result.get("data") or [{}])[0]
-    b64 = item.get("b64_json")
-    if not b64:
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-        print("[失败] 未返回 Base64 图像")
+        out_dir = os.path.join("output", "images")
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f"image-{int(time.time() * 1000)}.png")
+        with open(out_path, "wb") as handle:
+            handle.write(base64.b64decode(b64))
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         sys.exit(1)
 
-    out_dir = os.path.join("output", "images")
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, f"image-{int(time.time() * 1000)}.png")
-    with open(out_path, "wb") as handle:
-        handle.write(base64.b64decode(b64))
+    print(json.dumps({"ok": True, "path": out_path}, ensure_ascii=False))
 
-    print(f"[完成] 图片已保存：{out_path}（Base64 长度 {len(b64)}）")
 
 if __name__ == "__main__":
     main()

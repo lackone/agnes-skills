@@ -5,8 +5,11 @@ Transient conditions (network errors and 408/429/500/502/503/504) are
 retried by `http_retry` with Retry-After aware backoff and a shared 429
 cooldown. Non-retryable responses (400/401/403/404/...) surface as
 `http_retry.HttpError` and are not retried.
+
+进度与调试信息写 stderr，保持 stdout 可供上层脚本输出唯一结果 JSON。
 """
 import json
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -35,8 +38,8 @@ def submit(payload):
     """Create a video task; return (video_id, raw_response)."""
     base = load_env.base_url()
     status, result = _post(f"{base}/videos", payload)
-    print(f"HTTP {status}")
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(f"HTTP {status}", file=sys.stderr)
+    print(json.dumps(result, indent=2, ensure_ascii=False), file=sys.stderr)
     if status >= 400:
         message = result.get("detail") or result.get("message") or "任务创建失败"
         raise SystemExit(f"任务创建失败：{message}")
@@ -63,17 +66,17 @@ def poll(video_id, model_name, interval=2, max_seconds=600):
             result = http_retry.request_json(req, retries=2, timeout=30)
         except http_retry.HttpError as exc:
             if exc.status in http_retry.RETRYABLE_STATUS:
-                print(f"poll {attempt} 瞬态错误 {exc.status}，下一轮继续：{exc}")
+                print(f"poll {attempt} 瞬态错误 {exc.status}，下一轮继续：{exc}", file=sys.stderr)
                 time.sleep(interval)
                 continue
             raise SystemExit(str(exc))
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            print(f"poll {attempt} 网络抖动，下一轮继续：{exc}")
+            print(f"poll {attempt} 网络抖动，下一轮继续：{exc}", file=sys.stderr)
             time.sleep(interval)
             continue
         status = result.get("status")
         progress = result.get("progress", 0)
-        print(f"[{attempt}] status={status} progress={progress}")
+        print(f"[{attempt}] status={status} progress={progress}", file=sys.stderr)
         if status in ("completed", "failed"):
             return result
         time.sleep(interval)

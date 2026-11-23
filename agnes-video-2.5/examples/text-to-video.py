@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """文生视频：agnes-video-2.5
 
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
+
 用法：python text-to-video.py [提示词] [时长] [尺寸] [画幅]
 """
 import argparse
+import json
 import sys
 
 import video_common
@@ -22,18 +25,13 @@ def main():
     MODEL = "agnes-video-2.5"
 
     args = parse_args()
-    prompt = args.prompt
-    seconds = args.seconds
-    size = args.size
-    ratio = args.ratio
-
     payload = {
         "model": MODEL,
-        "prompt": prompt,
+        "prompt": args.prompt,
         "mode": "text",
-        "seconds": seconds,
-        "size": size,
-        "aspect_ratio": ratio,
+        "seconds": args.seconds,
+        "size": args.size,
+        "aspect_ratio": args.ratio,
     }
 
     video_id, _ = video_common.submit(payload)
@@ -41,11 +39,11 @@ def main():
     url = video_common.final_url(final)
 
     if final.get("status") == "completed" and url:
-        print("[完成] 视频已生成")
-        print(f"视频地址：{url}")
+        print(json.dumps({"ok": True, "url": url, "video_id": video_id}, ensure_ascii=False))
     else:
-        print("[失败] 视频未完成：", final.get("error"))
+        print(json.dumps({"ok": False, "error": final.get("error") or "视频未完成"}, ensure_ascii=False))
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

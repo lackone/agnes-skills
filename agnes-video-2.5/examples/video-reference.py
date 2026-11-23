@@ -2,10 +2,12 @@
 """视频参考：agnes-video-2.5
 
 参考视频只接受可公开访问的 URL，不做本地 Data URI 内联。
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
 
 用法：python video-reference.py [参考视频URL] [提示词] [时长] [尺寸] [画幅] [起始秒数]
 """
 import argparse
+import json
 import sys
 
 import video_common
@@ -26,24 +28,19 @@ def main():
     MODEL = "agnes-video-2.5"
 
     args = parse_args()
-    source = args.source
-    prompt = args.prompt
-    seconds = args.seconds
-    size = args.size
-    ratio = args.ratio
-    start_seconds = args.start_seconds
-    if start_seconds < 0:
-        raise SystemExit("start_seconds 不能为负数")
+    if args.start_seconds < 0:
+        print(json.dumps({"ok": False, "error": "start_seconds 不能为负数"}, ensure_ascii=False))
+        sys.exit(1)
 
     payload = {
         "model": MODEL,
-        "prompt": prompt,
+        "prompt": args.prompt,
         "mode": "reference",
-        "seconds": seconds,
-        "size": size,
-        "aspect_ratio": ratio,
+        "seconds": args.seconds,
+        "size": args.size,
+        "aspect_ratio": args.ratio,
         "videos": [
-            {"url": source, "start_seconds": start_seconds, "require_audio": False}
+            {"url": args.source, "start_seconds": args.start_seconds, "require_audio": False}
         ],
     }
 
@@ -52,11 +49,11 @@ def main():
     url = video_common.final_url(final)
 
     if final.get("status") == "completed" and url:
-        print("[完成] 视频已生成")
-        print(f"视频地址：{url}")
+        print(json.dumps({"ok": True, "url": url, "video_id": video_id}, ensure_ascii=False))
     else:
-        print("[失败] 视频未完成：", final.get("error"))
+        print(json.dumps({"ok": False, "error": final.get("error") or "视频未完成"}, ensure_ascii=False))
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

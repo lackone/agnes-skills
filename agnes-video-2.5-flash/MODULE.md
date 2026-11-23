@@ -125,7 +125,7 @@ description: Agnes Video 2.5 Flash 轻量异步视频生成，支持文生视频
 
 ## 批量生成与本地下载
 
-- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`aspect_ratio` 及可选 `images`/`audios`），线程池并发提交并轮询，默认最多 4 个并发，`--concurrency` 可覆盖；任务一完成先打印 URL，脚本不在进程内下载。
+- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`aspect_ratio` 及可选 `images`/`audios`），线程池并发提交并轮询，默认最多 4 个并发，`--concurrency` 可覆盖；脚本不在进程内下载，逐条进度写 stderr，stdout 只输出一份汇总 JSON `{"ok": true, "results": [...]}`。
 - 落盘由调度方逐条另起独立 `download.py <url> output/batch-videos <index>` 后台进程完成，与生成进程解耦；下载逻辑复用 `media_download.py`，流式写入，单文件默认上限 512 MiB，瞬态错误有限重试，扩展名取 Content-Type，回退到 URL 后缀。
 - 每个请求项仍受 Flash 专属限制：图片 ≤5、音频 ≤3、不支持 `videos`。
 

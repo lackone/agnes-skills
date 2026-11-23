@@ -4,6 +4,8 @@
 请求输入为 JSON 数组，每个元素：
     {"prompt": "...", "size": "1K", "ratio": "16:9"}
 
+stdout 仅输出一个汇总结果 JSON；逐条进度与失败提示走 stderr。
+
 用法：
     python batch-images.py --request prompts.json
     cat prompts.json | python batch-images.py --request -
@@ -62,7 +64,7 @@ def main():
     workers = args.concurrency or min(len(items), 8)
     results = [None] * len(items)
 
-    # 并发提交生成任务；任一任务完成即先打印其 URL，不在进程内下载。
+    # 并发提交生成任务；进度写 stderr，stdout 只保留最终汇总 JSON。
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(generate_one, item): i for i, item in enumerate(items)}
         for future in as_completed(futures):
@@ -71,13 +73,13 @@ def main():
                 url = future.result()
                 if not url:
                     raise ValueError("未返回成片地址")
-                results[index] = {"ok": True, "url": url}
-                print(f"[完成] 任务 {index + 1}：{url}")
+                results[index] = {"index": index, "ok": True, "url": url}
+                print(f"[完成] 任务 {index + 1}：{url}", file=sys.stderr)
             except Exception as exc:  # 单任务失败不影响其他任务
-                results[index] = {"ok": False, "error": str(exc)}
-                print(f"[失败] 任务 {index + 1}：{exc}")
+                results[index] = {"index": index, "ok": False, "error": str(exc)}
+                print(f"[失败] 任务 {index + 1}：{exc}", file=sys.stderr)
 
-    print(json.dumps({"results": results}, ensure_ascii=False, indent=2))
+    print(json.dumps({"ok": True, "results": results}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

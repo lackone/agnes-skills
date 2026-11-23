@@ -4,9 +4,12 @@
 生成脚本只回 URL；本脚本单独负责把成片下载到本地，生命周期与生成脚本解耦，
 避免生成脚本退出时内置后台下载线程被中断。
 
+stdout 仅输出一个结果 JSON；进度与提示走 stderr。
+
 用法：python download.py <url> <out_dir> [index]
 """
 import argparse
+import json
 import sys
 
 import media_download
@@ -21,9 +24,9 @@ def main():
     try:
         path = media_download.download_media(args.url, args.out_dir, int(args.index))
     except Exception as exc:
-        print(f"[下载失败] {exc}")
+        print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         sys.exit(1)
-    print(f"[下载] 已保存：{path}")
+    print(json.dumps({"ok": True, "path": path, "index": int(args.index)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
