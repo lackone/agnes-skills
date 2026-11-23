@@ -8,6 +8,7 @@
 - Extension comes from Content-Type, falling back to the URL suffix.
 """
 import os
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -15,6 +16,62 @@ import urllib.request
 import http_retry
 
 MAX_MIB_DEFAULT = 512
+
+
+def _registry_proxies():
+    """读取 Windows WinINET 注册表代理；非 Windows / 未启用返回 None。"""
+    if sys.platform != "win32":
+        return None
+    try:
+        import winreg
+
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Internet Settings",
+        )
+        try:
+            enable, _ = winreg.QueryValueEx(key, "ProxyEnable")
+            if not enable:
+                return None
+            server, _ = winreg.QueryValueEx(key, "ProxyServer")
+        finally:
+            winreg.CloseKey(key)
+        if not server or not server.strip():
+            return None
+        server = server.strip()
+        proxies = {}
+        if "=" in server:
+            for part in server.split(";"):
+                if "=" in part:
+                    scheme, addr = part.split("=", 1)
+                    proxies[scheme.strip().lower()] = addr.strip()
+        else:
+            proxies["http"] = server
+            proxies["https"] = server
+        for scheme, addr in list(proxies.items()):
+            if addr and "://" not in addr:
+                proxies[scheme] = "http://" + addr
+        return proxies
+    except OSError:
+        return None
+
+
+def _opener(use_proxy=True):
+    """构造下载 opener。
+
+    - `use_proxy=False`：显式空 ProxyHandler，禁用一切代理，直连。
+    - `use_proxy=True`：合并环境变量代理与 Windows 系统代理；都没有则默认 opener（直连）。
+    """
+    if not use_proxy:
+        return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    proxies = dict(urllib.request.getproxies())
+    registry = _registry_proxies()
+    if registry:
+        proxies.update(registry)
+    if proxies:
+        return urllib.request.build_opener(urllib.request.ProxyHandler(proxies))
+    return urllib.request.build_opener()
+
 
 _CONTENT_EXT = {
     "image/png": ".png",
@@ -45,8 +102,12 @@ def _retry_after(header):
         return None
 
 
-def download_media(url, out_dir, index=0, max_mib=MAX_MIB_DEFAULT, retries=3):
+def download_media(url, out_dir, index=0, max_mib=MAX_MIB_DEFAULT, retries=3, use_proxy=True):
     """Download `url` into `out_dir`; return the saved local path.
+
+    Args:
+        use_proxy: `True`（默认）自动探测环境变量与系统代理，有则走代理、无则直连；
+            `False` 强制直连，忽略一切代理配置。
 
     Raises after the final retry, or when the file exceeds `max_mib`.
     """
@@ -60,7 +121,7 @@ def download_media(url, out_dir, index=0, max_mib=MAX_MIB_DEFAULT, retries=3):
                 url,
                 headers={"User-Agent": "agnes-skills/1.0"},
             )
-            with urllib.request.urlopen(request, timeout=300) as resp:
+            with _opener(use_proxy).open(request, timeout=300) as resp:
                 content_type = resp.headers.get("Content-Type", "").split(";", 1)[0].strip()
                 ext = _CONTENT_EXT.get(content_type) or _ext_from_url(url) or ".bin"
                 target = os.path.join(

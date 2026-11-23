@@ -6,7 +6,7 @@
 
 stdout 仅输出一个结果 JSON；进度与提示走 stderr。
 
-用法：python download.py <url> <out_dir> [index]
+用法：python download.py <url> <out_dir> [index] [--no-proxy]
 """
 import argparse
 import json
@@ -20,9 +20,12 @@ def main():
     parser.add_argument("url", help="成片结果 URL")
     parser.add_argument("out_dir", help="本地保存目录")
     parser.add_argument("index", nargs="?", default="0", help="序号（文件名前缀）")
+    parser.add_argument("--no-proxy", action="store_true", help="强制直连，不走代理")
     args = parser.parse_args()
     try:
-        path = media_download.download_media(args.url, args.out_dir, int(args.index))
+        path = media_download.download_media(
+            args.url, args.out_dir, int(args.index), use_proxy=not args.no_proxy
+        )
     except Exception as exc:
         print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         sys.exit(1)
