@@ -3,7 +3,7 @@
 
 两张参考图可为本地路径、公共 HTTPS URL 或 Data URI；本地文件会被读成 Data URI 内联提交。
 
-用法：python multi-image-combine.py [图片1] [图片2] [提示词]
+用法：python multi-image-combine.py [图片1] [图片2] [提示词] [尺寸] [比例]
 """
 import argparse
 import json
@@ -11,7 +11,6 @@ import sys
 
 import http_retry
 import load_env
-import media_download
 import media_input
 
 
@@ -20,6 +19,8 @@ def parse_args():
     parser.add_argument("image1", nargs="?", default="https://example.com/character-1.png", help="第一张参考图")
     parser.add_argument("image2", nargs="?", default="https://example.com/character-2.png", help="第二张参考图")
     parser.add_argument("prompt", nargs="?", default="把两位参考人物安排在同一张茶席上，左侧沏茶、右侧捧杯，竹帘作背景，淡彩国风，光线柔和", help="合成指令")
+    parser.add_argument("size", nargs="?", default="1K", choices=["1K", "2K", "3K", "4K"], help="尺寸档位")
+    parser.add_argument("ratio", nargs="?", default="16:9", help="宽高比")
     return parser.parse_args()
 
 
@@ -32,14 +33,16 @@ def main():
     image1 = args.image1
     image2 = args.image2
     prompt = args.prompt
+    size = args.size
+    ratio = args.ratio
 
     image_uris = [media_input.prepare_image(image1), media_input.prepare_image(image2)]
 
     payload = {
         "model": "agnes-image-2.5-flash",
         "prompt": prompt,
-        "size": "2K",
-        "ratio": "16:9",
+        "size": size,
+        "ratio": ratio,
         "extra_body": {
             "image": image_uris,
             "response_format": "url",
@@ -55,7 +58,6 @@ def main():
         sys.exit(1)
     print("[完成] 多图合成结束")
     print(f"图片地址：{image_url}")
-    media_download.spawn_download(image_url, "output/images", 0)
 
 if __name__ == "__main__":
     main()

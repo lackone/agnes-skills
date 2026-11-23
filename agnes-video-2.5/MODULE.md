@@ -110,18 +110,19 @@ description: Agnes Video 2.5 异步视频生成，支持文生视频、首尾帧
 
 | 脚本 | 用途 | 参数 |
 |---|---|---|
-| `text-to-video.py` | 文生视频（后台下载） | `[提示词] [时长] [尺寸] [画幅]` |
-| `keyframe-video.py` | 首尾帧控制（后台下载） | `[首帧] [尾帧] [提示词] [时长]` |
-| `image-reference.py` | 图片参考（后台下载） | `[图片1,图片2,...] [提示词] [尺寸] [画幅]` |
-| `audio-reference.py` | 音频参考（后台下载） | `[音频1,音频2,...] [提示词] [尺寸] [画幅]` |
-| `video-reference.py` | 视频参考（后台下载） | `[参考视频URL] [提示词] [时长] [起始秒数]` |
+| `text-to-video.py` | 文生视频（只回 URL） | `[提示词] [时长] [尺寸] [画幅]` |
+| `keyframe-video.py` | 首尾帧控制（只回 URL） | `[首帧] [尾帧] [提示词] [时长] [尺寸] [画幅]` |
+| `image-reference.py` | 图片参考（只回 URL） | `[图片1,图片2,...] [提示词] [时长] [尺寸] [画幅]` |
+| `audio-reference.py` | 音频参考（只回 URL） | `[音频1,音频2,...] [提示词] [时长] [尺寸] [画幅]` |
+| `video-reference.py` | 视频参考（只回 URL） | `[参考视频URL] [提示词] [时长] [尺寸] [画幅] [起始秒数]` |
 | `query-video.py` | 查询已有任务（只回 URL，不落盘） | `<video_id>` |
-| `batch-videos.py` | 批量并发生成 + 后台下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+| `batch-videos.py` | 批量并发生成 + 线程池下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+| `download.py` | 独立下载进程（调度方后台拉起） | `<url> <out_dir> [index]` |
 
 ## 默认参数与交付顺序
 
 - 用户未指定时：`720P`、比例 `16:9`、时长 `5` 秒；用户显式给出的时长 / 尺寸 / 比例以用户输入为准。
-- 生成类脚本（文生、首尾帧、各类参考）返回成片 URL 后，先把 URL 发到对话框展示；本地下载放后台线程异步进行，不阻塞回复；下载完成后再展示本地路径，下载失败单独提示。`query-video.py` 仅查询状态，只回 URL、不落盘。
+- 生成类脚本（文生、首尾帧、各类参考）返回成片 URL 后，先把 URL 发到对话框展示；脚本不在进程内下载，由调度方另起独立 `download.py` 后台进程落盘，不阻塞回复；下载完成后再展示本地路径，下载失败单独提示。`query-video.py` 仅查询状态，只回 URL、不落盘。
 
 ## 批量生成与本地下载
 

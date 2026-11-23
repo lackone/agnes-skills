@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """首尾帧控制：agnes-video-2.5
 
-用法：python keyframe-video.py [首帧URL] [尾帧URL] [提示词] [时长]
+用法：python keyframe-video.py [首帧URL] [尾帧URL] [提示词] [时长] [尺寸] [画幅]
 """
 import argparse
 import sys
 
-import media_download
 import video_common
 
 
@@ -16,6 +15,8 @@ def parse_args():
     parser.add_argument("last_frame", nargs="?", default="https://example.com/last.png", help="尾帧图片 URL")
     parser.add_argument("prompt", nargs="?", default="人物由首帧的坐姿起身，缓步走到画面右侧的画架前，镜头平稳跟随，动作自然地过渡到尾帧", help="过渡指令")
     parser.add_argument("seconds", nargs="?", default="5", help="时长（4–12 秒）")
+    parser.add_argument("size", nargs="?", default="720P", help="尺寸档位")
+    parser.add_argument("ratio", nargs="?", default="16:9", help="宽高比")
     return parser.parse_args()
 
 
@@ -27,14 +28,16 @@ def main():
     last_frame = args.last_frame
     prompt = args.prompt
     seconds = args.seconds
+    size = args.size
+    ratio = args.ratio
 
     payload = {
         "model": MODEL,
         "prompt": prompt,
         "mode": "keyframe",
         "seconds": seconds,
-        "size": "720P",
-        "aspect_ratio": "16:9",
+        "size": size,
+        "aspect_ratio": ratio,
         "first_frame": first_frame,
         "last_frame": last_frame,
     }
@@ -46,7 +49,6 @@ def main():
     if final.get("status") == "completed" and url:
         print("[完成] 视频已生成")
         print(f"视频地址：{url}")
-        media_download.spawn_download(url, "output/videos", 0)
     else:
         print("[失败] 视频未完成：", final.get("error"))
         sys.exit(1)

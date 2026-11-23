@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""独立下载入口：由调度方作为后台独立进程拉起，落盘后退出。
+
+生成脚本只回 URL；本脚本单独负责把成片下载到本地，生命周期与生成脚本解耦，
+避免生成脚本退出时内置后台下载线程被中断。
+
+用法：python download.py <url> <out_dir> [index]
+"""
+import argparse
+import sys
+
+import media_download
+
+
+def main():
+    parser = argparse.ArgumentParser(description="独立下载成片到本地目录")
+    parser.add_argument("url", help="成片结果 URL")
+    parser.add_argument("out_dir", help="本地保存目录")
+    parser.add_argument("index", nargs="?", default="0", help="序号（文件名前缀）")
+    args = parser.parse_args()
+    try:
+        path = media_download.download_media(args.url, args.out_dir, int(args.index))
+    except Exception as exc:
+        print(f"[下载失败] {exc}")
+        sys.exit(1)
+    print(f"[下载] 已保存：{path}")
+
+
+if __name__ == "__main__":
+    main()

@@ -2,7 +2,7 @@
 """批量文生图：并发提交，先回 URL，再后台下载到本地。
 
 请求输入为 JSON 数组，每个元素：
-    {"prompt": "...", "size": "2K", "ratio": "16:9"}
+    {"prompt": "...", "size": "1K", "ratio": "16:9"}
 
 用法：
     python batch-images.py --request prompts.json
@@ -34,7 +34,7 @@ def generate_one(item):
     payload = {
         "model": IMAGE_MODEL,
         "prompt": item["prompt"],
-        "size": item.get("size", "2K"),
+        "size": item.get("size", "1K"),
         "ratio": item.get("ratio", "16:9"),
         "extra_body": {"response_format": "url"},
     }

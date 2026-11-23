@@ -20,7 +20,7 @@ description: Agnes Image 2.5 Flash 图像生成、图生图与多图合成。触
 |---|---|---|---|
 | `model` | string | 是 | 固定 `agnes-image-2.5-flash` |
 | `prompt` | string | 是 | 生成或编辑指令 |
-| `size` | string | 是 | 档位 `1K`/`2K`/`3K`/`4K`；技能默认 `2K`；也兼容历史精确尺寸写法 |
+| `size` | string | 是 | 档位 `1K`/`2K`/`3K`/`4K`；技能默认 `1K`；也兼容历史精确尺寸写法 |
 | `ratio` | string | 否 | 与档位配合的宽高比；技能默认 `16:9`（接口默认 `1:1`） |
 | `return_base64` | boolean | 否 | 文生图以 Base64 返回时使用 |
 | `extra_body.image` | string[] | 图生图/合成必填 | 输入图像数组，公共 URL 或 Data URI Base64 |
@@ -90,16 +90,17 @@ description: Agnes Image 2.5 Flash 图像生成、图生图与多图合成。触
 
 | 脚本 | 用途 | 参数 |
 |---|---|---|
-| `text-to-image.py` | 文生图（后台下载） | `[提示词] [尺寸] [比例]` |
+| `text-to-image.py` | 文生图（只回 URL） | `[提示词] [尺寸] [比例]` |
 | `text-to-image-base64.py` | 文生图（Base64 直落盘） | `[提示词] [尺寸]` |
-| `image-to-image.py` | 图生图（后台下载） | `[输入图片路径或URL] [提示词] [尺寸] [比例]` |
-| `multi-image-combine.py` | 多图合成（后台下载） | `[图片1] [图片2] [提示词]` |
-| `batch-images.py` | 批量并发生成 + 后台下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+| `image-to-image.py` | 图生图（只回 URL） | `[输入图片路径或URL] [提示词] [尺寸] [比例]` |
+| `multi-image-combine.py` | 多图合成（只回 URL） | `[图片1] [图片2] [提示词] [尺寸] [比例]` |
+| `batch-images.py` | 批量并发生成 + 线程池下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+| `download.py` | 独立下载进程（调度方后台拉起） | `<url> <out_dir> [index]` |
 
 ## 默认参数与交付顺序
 
-- 用户未指定时：档位 `2K`、比例 `16:9`；用户显式给出的尺寸 / 比例以用户输入为准。
-- 接口返回图片 URL 后，先把 URL 发到对话框展示；本地下载放后台线程异步进行，不阻塞回复；下载完成后再展示本地路径，下载失败单独提示。
+- 用户未指定时：档位 `1K`、比例 `16:9`；用户显式给出的尺寸 / 比例以用户输入为准。
+- 接口返回图片 URL 后，先把 URL 发到对话框展示；生成脚本不在进程内下载，由调度方另起独立 `download.py` 后台进程落盘，不阻塞回复；下载完成后再展示本地路径，下载失败单独提示。
 
 ## 批量生成与本地下载
 

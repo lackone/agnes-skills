@@ -6,7 +6,6 @@
 import argparse
 import sys
 
-import media_download
 import video_common
 
 
@@ -44,7 +43,6 @@ def main():
     if final.get("status") == "completed" and url:
         print("[完成] 视频已生成")
         print(f"视频地址：{url}")
-        media_download.spawn_download(url, "output/videos", 0)
     else:
         print("[失败] 视频未完成：", final.get("error"))
         sys.exit(1)

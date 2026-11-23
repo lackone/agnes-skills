@@ -11,7 +11,6 @@ import sys
 
 import http_retry
 import load_env
-import media_download
 import media_input
 
 
@@ -19,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="图生图：agnes-image-2.5-flash")
     parser.add_argument("source", nargs="?", default="https://example.com/input-image.png", help="输入图片路径、URL 或 Data URI")
     parser.add_argument("prompt", nargs="?", default="保留原有人物姿态与构图，把背景替换为雪后初晴的古镇茶馆，整体调成暖色调胶片质感", help="编辑指令")
-    parser.add_argument("size", nargs="?", default="2K", choices=["1K", "2K", "3K", "4K"], help="尺寸档位")
+    parser.add_argument("size", nargs="?", default="1K", choices=["1K", "2K", "3K", "4K"], help="尺寸档位")
     parser.add_argument("ratio", nargs="?", default="16:9", help="宽高比")
     return parser.parse_args()
 
@@ -57,7 +56,6 @@ def main():
         sys.exit(1)
     print("[完成] 图生图结束")
     print(f"图片地址：{image_url}")
-    media_download.spawn_download(image_url, "output/images", 0)
 
 if __name__ == "__main__":
     main()

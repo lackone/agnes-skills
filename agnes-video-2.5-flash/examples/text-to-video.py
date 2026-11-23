@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """文生视频（固定 720P）：agnes-video-2.5-flash
 
-默认 16:9、12 秒；先回 URL，后台异步下载到 output/videos。
+默认 16:9、12 秒；只回 URL，下载由独立 download.py 进程完成。
 
 用法：python text-to-video.py [提示词] [时长] [画幅]
 """
 import argparse
 import sys
 
-import media_download
 import video_common
 
 
@@ -47,9 +46,6 @@ def main():
 
     print("[完成] 视频已生成")
     print(f"视频地址：{url}")
-
-    # 后台异步下载，不阻塞 URL 交付；主线程打印地址后即返回。
-    media_download.spawn_download(url, "output/videos", 0)
 
 if __name__ == "__main__":
     main()

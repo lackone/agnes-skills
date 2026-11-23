@@ -8,7 +8,6 @@
 - Extension comes from Content-Type, falling back to the URL suffix.
 """
 import os
-import threading
 import time
 import urllib.error
 import urllib.request
@@ -100,17 +99,3 @@ def download_media(url, out_dir, index=0, max_mib=MAX_MIB_DEFAULT, retries=3):
             raise
 
     raise last_error
-
-
-def spawn_download(url, out_dir, index=0):
-    """后台 daemon 线程下载，不阻塞调用方；URL 先行交付，落盘结果异步打印。"""
-    def _save():
-        try:
-            path = download_media(url, out_dir, index)
-            print(f"[下载] 已保存：{path}")
-        except Exception as exc:
-            print(f"[下载失败] {exc}")
-
-    thread = threading.Thread(target=_save, daemon=True)
-    thread.start()
-    return thread

@@ -11,9 +11,12 @@ Agnes Video 2.5 异步视频生成：文生视频、首尾帧、图片/音频/�
 ```bash
 python examples/text-to-video.py "竹林小径上素色长衫的人缓步前行，落叶掠过，镜头跟拍" "5" "720P" "16:9"
 python examples/keyframe-video.py "https://example.com/first.png" "https://example.com/last.png" "人物由坐姿起身走到画架前，镜头平稳跟随" "5"
-python examples/image-reference.py "C:/work/character.png" "以 <Picture 1> 造型服饰为准，在古镇回廊驻足看游鱼，中景横移" "720P" "16:9"
-python examples/audio-reference.py "C:/work/bgm.mp3" "按 <Audio 1> 的节拍与氛围安排集市摊位依次掠过的剪辑" "720P" "16:9"
+python examples/image-reference.py "C:/work/character.png" "以 <Picture 1> 造型服饰为准，在古镇回廊驻足看游鱼，中景横移" "5" "720P" "16:9"
+python examples/audio-reference.py "C:/work/bgm.mp3" "按 <Audio 1> 的节拍与氛围安排集市摊位依次掠过的剪辑" "5" "720P" "16:9"
 python examples/video-reference.py "https://example.com/clip.mp4" "沿用 <Video 1> 的动作时序与镜头衔接，换成清晨天台花园" "5"
+
+# 单结果只回 URL；拿到 URL 后另起独立进程下载到本地
+python examples/download.py "<成片URL>" output/videos
 
 # 批量并发：JSON 数组请求，先回 URL 再后台下载
 python examples/batch-videos.py --request jobs.json

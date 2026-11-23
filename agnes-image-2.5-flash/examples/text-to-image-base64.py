@@ -17,7 +17,7 @@ import load_env
 def parse_args():
     parser = argparse.ArgumentParser(description="文生图（Base64 输出）：agnes-image-2.5-flash")
     parser.add_argument("prompt", nargs="?", default="极简木质书架特写，午后阳光斜照在一排书脊上，尘埃在光束里浮动，安静温暖，方形构图", help="生成指令")
-    parser.add_argument("size", nargs="?", default="2K", choices=["1K", "2K", "3K", "4K"], help="尺寸档位")
+    parser.add_argument("size", nargs="?", default="1K", choices=["1K", "2K", "3K", "4K"], help="尺寸档位")
     return parser.parse_args()
 
 
