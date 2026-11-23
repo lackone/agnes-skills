@@ -20,35 +20,7 @@
 
 ### 单独安装
 
-每个子目录自包含 `examples/`（含 `load_env.py` 及其他本地共享模块），只保留需要的目录，放入 Agent 的 skills 目录即可。最小分发单元是整个子目录（`MODULE.md` + `README.md` + `examples/` 全部 `.py`）；不要只拷贝单个脚本，缺少同目录共享模块会导入失败。`.env`、`output/`、`__pycache__/` 与下载的媒体文件不随包分发。
-
-```text
-agnes-skills/
-├── README.md
-├── requirements.txt
-├── .env.example
-├── .gitignore
-├── agnes-3.0-flash/
-│   ├── MODULE.md
-│   ├── README.md
-│   └── examples/
-├── agnes-3.0-pro/
-│   ├── MODULE.md
-│   ├── README.md
-│   └── examples/
-├── agnes-image-2.5-flash/
-│   ├── MODULE.md
-│   ├── README.md
-│   └── examples/
-├── agnes-video-2.5/
-│   ├── MODULE.md
-│   ├── README.md
-│   └── examples/
-└── agnes-video-2.5-flash/
-    ├── MODULE.md
-    ├── README.md
-    └── examples/
-```
+每个子目录自包含 `examples/`（含 `load_env.py` 及其他本地共享模块），只保留需要的目录，放入 Agent 的 skills 目录即可。最小分发单元是整个子目录（`MODULE.md` + `README.md` + `examples/` 全部 `.py`）；不要只拷贝单个脚本，缺少同目录共享模块会导入失败。`.env`、`output/`、`__pycache__/` 与下载的媒体文件不随包分发。目录结构见主入口 `SKILL.md`「文件结构」。
 
 ## 运行环境
 
@@ -62,8 +34,8 @@ agnes-skills/
 
 - **参数传入**：单结果脚本用可选位置参数，批量脚本用命名选项；所有脚本支持 `-h/--help`，运行过程无交互式提问。
 - **退出码**：成功退出码 0；鉴权失败、参数被拒、任务失败等情况退出码 1。
-- **输出格式**：媒体脚本 stdout 只输出一个结果 JSON（成功 `{"ok": true, "url": "..."}`，失败 `{"ok": false, "error": "..."}`；批量 `{"ok": true, "results": [...]}`；下载 `{"ok": true, "path": "..."}`），进度与提示走 stderr，便于直接解析。脚本不内置下载；本地落盘由调度方另起独立 `download.py` 后台进程完成，落盘后再补报路径。批量单条失败被隔离、不影响其他任务。
-- **快响应**：调度方以后台任务方式启动脚本，拿到 URL 立即先展示，不等下载与进程退出；下载由独立 `download.py` 进程保活；不重复读取子模块文档、不逐目录排查 Key（隔离执行环境读不到 `.env` 时，先从套件根 `.env` 解析并注入 `AGNES_API_KEY` 环境变量）；落盘只一份，不复制第二份；批量并发用线程池，保持纯标准库，不引入第三方异步 HTTP 依赖。
+- **输出格式**：媒体脚本 stdout 只输出一个结果 JSON（成功 `{"ok": true, "url": "..."}`，失败 `{"ok": false, "error": "..."}`；批量 `{"ok": true, "results": [...]}`；下载 `{"ok": true, "path": "..."}`），进度与提示走 stderr，便于直接解析。脚本不内置下载，本地落盘由独立 `download.py` 后台进程完成。批量单条失败被隔离、不影响其他任务。
+- **快响应与交付时序**：以后台任务方式启动脚本；先回 URL、后后台落盘的时序铁律，以及不重复读文档、不排查 Key、落盘只一份、线程池并发、纯标准库等快响应约定，统一以主入口 `SKILL.md`「交付顺序」「快响应约定」为准，本文件不重复。
 - **环境隔离**：`.env` 只从环境变量或文件读取，不写入任何脚本；真实 Key 不进入日志、不打包进产物。
 
 ## 配置 API Key
@@ -80,11 +52,7 @@ AGNES_API_KEY=sk-你的实际API Key
 
 ## 素材输入：Data URI 策略
 
-套件**不包含对象存储/S3 上传步骤**。本地图片、音频在示例脚本内直接读成 Base64 Data URI 内联提交：
-
-- **图像生成端点**：官方文档明确接受公共 URL 或 Data URI Base64 输入，本地图片可直接内联。
-- **视频参考素材**：官方文档契约为「可公开访问的 HTTPS URL」。本地图片/音频转 Data URI 内联属于**实测可用的未文档化回退**，不保证后续版本持续放行；若返回 400 `valid supported media`，应改为公共 HTTPS URL 重试。音频格式不被接受时先转 mp3。
-- 参考视频（仅标准版 `agnes-video-2.5`）只接受 URL 对象，不做内联。
+套件不含对象存储 / S3 上传步骤，公共口径见主入口 `SKILL.md`「素材输入：Data URI 策略」。要点：本地图 / 音频可由脚本读成 Data URI 内联（实测回退、非文档保证，返回 400 `valid supported media` 时改公共 HTTPS URL）；音频被拒先转 mp3；标准版参考视频只接受 URL 对象。
 
 ## 运行示例
 
@@ -103,21 +71,11 @@ python agnes-video-2.5-flash/examples/text-to-video.py "海边栈道上白鹭收
 
 视频为异步任务：提交后用返回的 `video_id` 轮询 `GET /agnesapi?model_name=<模型ID>`（网关去掉 `/v1` 前缀），通常需要 2–5 分钟；Flash 进度在生成中常停留在 10，完成后跳到 100。
 
-批量任务：`batch-images.py` / `batch-videos.py` 线程池并发提交，图片默认最多 8 路、视频默认最多 4 路，可用 `--concurrency` 覆盖；脚本只回 URL 清单、不在进程内下载，落盘由调度方逐条另起独立 `download.py <url> <out_dir> [index]` 后台进程完成，与生成进程解耦。
+批量任务并发与下载口径见主入口 `SKILL.md`「快响应约定」「交付顺序」；图片默认 8 路、视频 4 路，`--concurrency` 可覆盖。
 
-## 默认路由与默认参数
+## 默认路由与交付顺序
 
-用户未明确指定时按下列默认值选择；用户显式给出的模型、尺寸、比例、时长以用户输入为准：
-
-| 场景 | 默认模型 | 默认参数 |
-|---|---|---|
-| 文本对话 / 推理 / 工具调用 | `agnes-3.0-flash` | — |
-| 生图 | `agnes-image-2.5-flash` | `16:9`，`1K` |
-| 生视频 | `agnes-video-2.5-flash` | `16:9`，`720P`，`12` 秒 |
-
-## 交付顺序：先 URL，后本地文件
-
-接口返回 URL 后先把链接发到对话框展示；单结果脚本不在进程内下载，由独立 `download.py` 后台进程落盘，不阻塞回复；下载完成后再展示保存好的本地路径。下载失败单独提示，不影响已展示的 URL。批量任务同理：脚本只回 URL 清单、不在进程内下载，落盘由调度方逐条另起独立 `download.py` 后台进程完成。
+默认模型 / 参数路由、先回 URL 后后台落盘的交付时序，均以主入口 `SKILL.md`「默认路由与默认参数」「交付顺序」为准，本文件不重复。
 
 ## 错误处理与重试
 
