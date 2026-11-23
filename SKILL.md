@@ -1,9 +1,6 @@
 ---
 name: agnes-skills
-description: |
-Agnes AI 全能力套件，统一入口为 agnes-skills。
-主入口按诉求分发到内部模块：3.0 Flash / Pro 对话推理、Image 2.5 Flash 生图、Video 2.5 / 2.5 Flash 生视频；五个子目录是内部模块，不需要作为独立技能分别触发。
-触发词：agnes、聊天、对话、推理、工具调用、thinking、生图、图像生成、图生图、多图合成、视频生成、文生视频、首尾帧、图片参考、音频参考。
+description: "Agnes AI 全能力套件，统一入口 agnes-skills，按诉求分发到内部模块：3.0 Flash/Pro 对话推理、Image 2.5 Flash 生图、Video 2.5/2.5 Flash 生视频；五个子目录是内部模块，不需要作为独立技能分别触发。触发词：agnes、聊天、对话、推理、工具调用、thinking、生图、图像生成、图生图、多图合成、视频生成、文生视频、首尾帧、图片参考、音频参考。"
 ---
 
 # agnes-skills
