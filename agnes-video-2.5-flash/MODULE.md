@@ -115,7 +115,7 @@ description: Agnes Video 2.5 Flash 轻量异步视频生成，支持文生视频
 | `image-reference.py` | 图片参考（只回 URL） | `[图片1,图片2,...] [提示词] [时长] [画幅]` |
 | `audio-reference.py` | 音频参考（只回 URL） | `[音频1,音频2,...] [提示词] [时长] [画幅]` |
 | `query-video.py` | 查询已有任务（只回 URL，不落盘） | `<video_id>` |
-| `batch-videos.py` | 批量并发生成 + 线程池下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+| `batch-videos.py` | 批量并发生成（只回 URL） | `--request <json|-> [--concurrency N]` |
 | `download.py` | 独立下载进程（调度方后台拉起） | `<url> <out_dir> [index]` |
 
 ## 默认参数与交付顺序
@@ -125,9 +125,8 @@ description: Agnes Video 2.5 Flash 轻量异步视频生成，支持文生视频
 
 ## 批量生成与本地下载
 
-- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`aspect_ratio` 及可选 `images`/`audios`），线程池并发提交并轮询，默认最多 4 个并发，`--concurrency` 可覆盖；任务一完成先打印 URL，并立即进入下载池与其余生成并行，不阻塞 URL 交付。
-- 下载由 `media_download.py` 完成：流式写入 `--output` 目录（默认 `output/batch-videos`），单文件默认上限 512 MiB，瞬态错误有限重试；扩展名取 Content-Type，回退到 URL 后缀。
-- `--no-download` 只返回 URL，不落盘。
+- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`aspect_ratio` 及可选 `images`/`audios`），线程池并发提交并轮询，默认最多 4 个并发，`--concurrency` 可覆盖；任务一完成先打印 URL，脚本不在进程内下载。
+- 落盘由调度方逐条另起独立 `download.py <url> output/batch-videos <index>` 后台进程完成，与生成进程解耦；下载逻辑复用 `media_download.py`，流式写入，单文件默认上限 512 MiB，瞬态错误有限重试，扩展名取 Content-Type，回退到 URL 后缀。
 - 每个请求项仍受 Flash 专属限制：图片 ≤5、音频 ≤3、不支持 `videos`。
 
 ## 错误处理与重试

@@ -18,8 +18,9 @@ python examples/video-reference.py "https://example.com/clip.mp4" "沿用 <Video
 # 单结果只回 URL；拿到 URL 后另起独立进程下载到本地
 python examples/download.py "<成片URL>" output/videos
 
-# 批量并发：JSON 数组请求，先回 URL 再后台下载
+# 批量并发：JSON 数组请求，只回 URL；落盘逐条用独立 download.py
 python examples/batch-videos.py --request jobs.json
+python examples/download.py "<成片URL>" output/videos <序号>
 ```
 
 参数均为可选位置参数，缺省走内置演示；`-h/--help` 查看参数说明。

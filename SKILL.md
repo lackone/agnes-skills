@@ -45,7 +45,7 @@ description: "Agnes AI 全能力套件，统一入口 agnes-skills，按诉求�
 - 接口返回结果 URL 后，**先把 URL 发到对话框展示**，不要等待下载完成。
 - **单结果生成脚本只回 URL，不在进程内下载**；拿到 URL 后，调度方另起一个独立后台进程运行同目录 `download.py <url> <out_dir> [index]` 落盘。下载进程与生成脚本生命周期解耦——生成脚本退出不会牵连下载进程，避免内置线程被进程退出中断。
 - 下载完成后，再把保存好的本地路径（或文件）发到对话框展示；下载失败单独提示，不影响已展示的 URL。
-- 批量任务在进程内线程池并发下载，`shutdown(wait=True)` 保活到下载完成；任一任务完成即先回 URL，并立即进入下载池与其余生成流水线并行，下完一条展示一条；`--no-download` 只返回 URL 不落盘。
+- 批量任务（`batch-images.py` / `batch-videos.py`）同样**只并发生成、逐条回 URL，不在进程内下载**；生成脚本退出不牵连下载。拿到 URL 清单后，调度方逐条另起独立后台进程运行 `download.py <url> <out_dir> [index]` 落盘。批量脚本无 `--output` / `--no-download` 参数。
 - 查询类脚本（`query-video.py`）只回 URL、不落盘。
 
 ## 快响应约定（强制）

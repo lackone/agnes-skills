@@ -94,7 +94,7 @@ description: Agnes Image 2.5 Flash 图像生成、图生图与多图合成。触
 | `text-to-image-base64.py` | 文生图（Base64 直落盘） | `[提示词] [尺寸]` |
 | `image-to-image.py` | 图生图（只回 URL） | `[输入图片路径或URL] [提示词] [尺寸] [比例]` |
 | `multi-image-combine.py` | 多图合成（只回 URL） | `[图片1] [图片2] [提示词] [尺寸] [比例]` |
-| `batch-images.py` | 批量并发生成 + 线程池下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+| `batch-images.py` | 批量并发生成（只回 URL） | `--request <json|-> [--concurrency N]` |
 | `download.py` | 独立下载进程（调度方后台拉起） | `<url> <out_dir> [index]` |
 
 ## 默认参数与交付顺序
@@ -104,9 +104,8 @@ description: Agnes Image 2.5 Flash 图像生成、图生图与多图合成。触
 
 ## 批量生成与本地下载
 
-- `batch-images.py` 读取 JSON 数组（每项为 `prompt`/`size`/`ratio`），线程池并发提交，默认最多 8 个并发，`--concurrency` 可覆盖；任务一完成先打印 URL，并立即进入下载池与其余生成并行，不阻塞 URL 交付。
-- 下载由 `media_download.py` 完成：流式写入 `--output` 目录（默认 `output/batch-images`），单文件默认上限 512 MiB，瞬态错误有限重试；扩展名取 Content-Type，回退到 URL 后缀。
-- `--no-download` 只返回 URL，不落盘。
+- `batch-images.py` 读取 JSON 数组（每项为 `prompt`/`size`/`ratio`），线程池并发提交，默认最多 8 个并发，`--concurrency` 可覆盖；任务一完成先打印 URL，脚本不在进程内下载。
+- 落盘由调度方逐条另起独立 `download.py <url> output/batch-images <index>` 后台进程完成，与生成进程解耦；下载逻辑复用 `media_download.py`，流式写入，单文件默认上限 512 MiB，瞬态错误有限重试，扩展名取 Content-Type，回退到 URL 后缀。
 
 ## 错误处理与重试
 

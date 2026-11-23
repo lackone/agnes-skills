@@ -103,7 +103,7 @@ python agnes-video-2.5-flash/examples/text-to-video.py "海边栈道上白鹭收
 
 视频为异步任务：提交后用返回的 `video_id` 轮询 `GET /agnesapi?model_name=<模型ID>`（网关去掉 `/v1` 前缀），通常需要 2–5 分钟；Flash 进度在生成中常停留在 10，完成后跳到 100。
 
-批量任务：`batch-images.py` / `batch-videos.py` 线程池并发提交，图片默认最多 8 路、视频默认最多 4 路，可用 `--concurrency` 覆盖；任务一出 URL 即进入下载池，与其余生成流水线并行，成片链接先回，后台下载到 `output/`；`--no-download` 可只取链接不落盘。
+批量任务：`batch-images.py` / `batch-videos.py` 线程池并发提交，图片默认最多 8 路、视频默认最多 4 路，可用 `--concurrency` 覆盖；脚本只回 URL 清单、不在进程内下载，落盘由调度方逐条另起独立 `download.py <url> <out_dir> [index]` 后台进程完成，与生成进程解耦。
 
 ## 默认路由与默认参数
 
@@ -117,7 +117,7 @@ python agnes-video-2.5-flash/examples/text-to-video.py "海边栈道上白鹭收
 
 ## 交付顺序：先 URL，后本地文件
 
-接口返回 URL 后先把链接发到对话框展示；单结果脚本不在进程内下载，由独立 `download.py` 后台进程落盘，不阻塞回复；下载完成后再展示保存好的本地路径。下载失败单独提示，不影响已展示的 URL。批量任务同理：先回 URL，进程内线程池并发下载，下完一条展示一条。
+接口返回 URL 后先把链接发到对话框展示；单结果脚本不在进程内下载，由独立 `download.py` 后台进程落盘，不阻塞回复；下载完成后再展示保存好的本地路径。下载失败单独提示，不影响已展示的 URL。批量任务同理：脚本只回 URL 清单、不在进程内下载，落盘由调度方逐条另起独立 `download.py` 后台进程完成。
 
 ## 错误处理与重试
 
