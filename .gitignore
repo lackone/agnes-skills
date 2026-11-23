@@ -1,0 +1,20 @@
+# Local secrets
+.env
+
+# Python virtual environments and caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local generation state / downloaded media (keep the suite source clean)
+output/
+state.json
+response.json
+manifest.json
+media/
+*.mp4
+*.jpg
+*.jpeg
+*.png
+*.webp

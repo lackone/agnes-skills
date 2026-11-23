@@ -1,0 +1,142 @@
+---
+name: agnes-video-2.5-flash
+description: Agnes Video 2.5 Flash 轻量异步视频生成，支持文生视频、首尾帧、图片与音频参考，固定 720P。触发词：flash 视频、快速视频、文生视频、图生视频、首尾帧、音频参考、720P。
+---
+
+# Agnes Video 2.5 Flash
+
+模型 ID：`agnes-video-2.5-flash`。复用 Video 2.5 的异步任务接口：`POST /v1/videos` 创建，`GET /agnesapi?model_name=agnes-video-2.5-flash` 轮询。除下列 Flash 专属限制外，公共参数、响应字段与查询方式与 Agnes Video 2.5 一致。
+
+## 端点与认证
+
+- 创建：`POST /v1/videos`
+- 查询：`GET /agnesapi?video_id=<VIDEO_ID>&model_name=agnes-video-2.5-flash`
+- 认证：`Authorization: Bearer <AGNES_API_KEY>`
+- 配置：环境变量或 `.env` 中的 `AGNES_API_KEY`、`AGNES_BASE_URL`，默认 `https://apihub.agnes-ai.com/v1`。
+- 运行环境：Python 3.10+，仅用标准库、无第三方依赖；脚本与共享模块同目录，`python examples/<脚本>.py` 直接运行。
+
+## 公共请求字段
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `model` | string | 是 | 固定 `agnes-video-2.5-flash` |
+| `prompt` | string | 是 | 内容描述；参考模式可用 `<Picture N>`、`<Audio N>` 指代素材 |
+| `mode` | string | 是 | `text` / `keyframe` / `reference` |
+| `seconds` | string | 否 | 时长字符串 `"4"`–`"12"`；技能默认 `"12"`（接口默认 `"5"`） |
+| `size` | string | 否 | Flash 固定 `"720P"`，其他值返回 400 |
+| `aspect_ratio` | string | 否 | 技能默认 `16:9`；`21:9 16:9 4:3 1:1 3:4 9:16` |
+| `seed` | integer | 否 | 随机种子 |
+| `n` | integer | 否 | 当前仅支持 `1` |
+
+## 模式专用字段
+
+| 字段 | 适用模式 | 说明 |
+|---|---|---|
+| `first_frame` | `keyframe` | 首帧图片 URL，与 `last_frame` 至少一个 |
+| `last_frame` | `keyframe` | 尾帧图片 URL |
+| `images` | `reference` | 参考图片数组，**最多 5 张** |
+| `audios` | `reference` | 参考音频数组，**最多 3 段** |
+| `videos` | — | **Flash 不支持**；传入有效内容返回 400 `videos is not supported` |
+
+- `text`：不允许任何媒体字段。
+- `keyframe`：只允许 `first_frame` / `last_frame`。
+- `reference`：`images` 或 `audios` 至少一类非空；不允许首尾帧与参考视频。
+
+## Flash 专属校验（失败不创建任务、不计费）
+
+| 校验项 | 规则 | 400 提示 |
+|---|---|---|
+| `size` | 仅 `"720P"` | `size must be 720P` |
+| 图片数量 | 最多 5 张 | `images length must not exceed 5` |
+| 音频数量 | 最多 3 段 | `audios length must not exceed 3` |
+| 参考视频 | 不支持 | `videos is not supported` |
+
+多错误时按 `size` → `images` → `audios` → `videos` 顺序返回首个错误。
+
+## 输入素材与 Data URI 口径
+
+- 官方契约：媒体 URL 必须可被 Agnes 服务公开访问。
+- 本地图片/音频由 `examples/media_input.py` 读成 Data URI 内联提交，属实测可用的回退方式，并非文档保证；若返回 `valid supported media` 一类 400，改回公共 HTTPS URL。
+- 音频格式被拒时先转 mp3 再提交。
+
+## 音频参考的边界（重要）
+
+音频参考用于**节奏、氛围、动作节拍、镜头剪辑和环境声音感**；它**不提供音色克隆、口音迁移、台词配音或口型对齐**。成片人物说什么由 `prompt` 文本决定；不要承诺“复刻参考音频的嗓音”。
+
+## 提交与轮询
+
+1. 创建后保存 `video_id`；所有模式推荐带 `model_name` 查询，纯 `video_id` 查询仅适用于 `mode: "text"`。
+2. 每隔 1–2 秒轮询，直到 `status` 为 `completed` 或 `failed`。
+3. 只有 `completed` 时顶层 `url` 可交付；`internal_status` / `internal_progress` 是内部字段，以 `status` / `progress` 为准。
+4. 进度在生成中常停留在 10，完成后跳 100，属正常现象。
+
+## 提示词规范
+
+先把诉求整理成完整描述再提交：只保留本次请求相关的细节，不擅自添加转场、台词、音效或戏剧性变化；创意描述与 `size`、`seconds`、`aspect_ratio` 等参数分离。
+
+按以下顺序组织描述：
+
+1. **主体与场景**：人物或物体是谁、处于什么环境、什么时间。
+2. **动作与变化**：主体如何移动，环境随时间如何变化。
+3. **镜头语言**：推、拉、摇、移、跟拍、固定镜头，以及景别选择。
+4. **视觉风格**：光线、色彩、材质、写实程度与整体氛围。
+5. **声音与节奏**：需要时写明环境声、动作声，或引用音频素材。
+6. **一致性要求**：必须保持不变的主体外观、产品细节或构图。
+
+### 去 AI 味与一致性
+
+- 动作与过渡自然：衣物、头发随运动真实摆动；镜头运动平稳且有依据，不为动而动。
+- 避免均匀打光、贴片式假背景与塑料质感；材质、光影与环境接触关系写具体。
+- 主体外观、产品细节与构图在整段时长内保持连贯，不中途漂移。
+
+### 参考模式占位符
+
+- `<Picture N>`、`<Audio N>` 在各自素材数组中从 1 开始编号；例如 `images` 数组第二张在提示词中写 `<Picture 2>`。
+- 上传素材后要在提示词里说明用途，例如“以 `<Picture 1>` 为角色参考，跟随 `<Audio 1>` 的节奏”；只传素材、不解释用途，结果更难控制。
+- 首尾帧模式：把首尾帧作为起止端点，描述两帧之间的动作与过渡，不要求成片全程复刻某一帧画面；补充起止姿态、动作过渡与镜头衔接要求。
+
+### 分模式提示词示例
+
+- **text 文生视频**：描述一个连贯场景及其运动，不堆砌多个无关情节。
+  > 夜晚森林里，三只猫组成微型乐队向前行进，镜头平稳后退，月光穿过树叶，伴随自然脚步声与乐器声。
+- **keyframe 首尾帧**：围绕两帧之间的自然过渡组织描述。
+  > 人物从首帧姿态自然转身走向窗边，衣物和头发运动真实，镜头缓慢推进，平滑过渡到尾帧构图。
+- **reference 图片参考**：点名参考图角色，再写画面动作与保持项。
+  > 以 `<Picture 1>` 的角色与美术风格为参考，角色在花田中自然奔跑，保持外观一致，低机位跟拍。
+- **reference 图片 + 音频**：分别说明视觉主体与音频承担的节奏作用。
+  > 以 `<Picture 1>` 为视觉主体，跟随 `<Audio 1>` 的节奏设计动作和镜头切换，保持自然连贯。
+
+## 示例脚本（`examples/`）
+
+| 脚本 | 用途 | 参数 |
+|---|---|---|
+| `text-to-video.py` | 文生视频 | `[提示词] [时长] [画幅]` |
+| `keyframe-video.py` | 首尾帧控制 | `[首帧] [尾帧] [提示词] [时长]` |
+| `image-reference.py` | 图片参考 | `[图片1,图片2,...] [提示词] [画幅]` |
+| `audio-reference.py` | 音频参考 | `[音频1,音频2,...] [提示词] [画幅]` |
+| `query-video.py` | 查询已有任务 | `<video_id>` |
+| `batch-videos.py` | 批量并发生成 + 后台下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+
+## 默认参数与交付顺序
+
+- 用户未指定时：`720P`、比例 `16:9`、时长 `12` 秒；用户显式给出的时长 / 比例以用户输入为准。
+- 任务完成返回视频 URL 后，先把 URL 发到对话框展示；本地下载放后台线程异步进行，不阻塞回复；下载完成后再展示本地路径，下载失败单独提示。
+
+## 批量生成与本地下载
+
+- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`aspect_ratio` 及可选 `images`/`audios`），默认按任务数开线程并发提交并轮询（一条任务一个线程），`--concurrency` 可限制上限；任务一完成先打印 URL，下载在后台线程进行，不阻塞 URL 交付。
+- 下载由 `media_download.py` 完成：流式写入 `--output` 目录（默认 `output/batch-videos`），单文件默认上限 512 MiB，瞬态错误有限重试；扩展名取 Content-Type，回退到 URL 后缀。
+- `--no-download` 只返回 URL，不落盘。
+- 每个请求项仍受 Flash 专属限制：图片 ≤5、音频 ≤3、不支持 `videos`。
+
+## 错误处理与重试
+
+- 可重试瞬态条件：网络/DNS/超时抖动，以及 HTTP 408、429、500、502、503、504；由 `examples/http_retry.py` 有限次重试（创建默认 3 次，轮询每轮 2 次）。
+- 退避优先读取响应头 `Retry-After`（上限 60 秒），否则指数退避（上限 30 秒）；429 在同一进程内跨线程共享冷却窗口。
+- 提交阶段：不可重试的 400/401/403/404 直接抛出并退出；5xx 重试仍可能产生重复任务并计费，重试后请核对任务清单。
+- 轮询阶段：瞬态 HTTP 错误与网络抖动跳过本轮、下一轮继续；4xx 等不可重试错误立即终止轮询。
+- 下载阶段：瞬态状态码按退避重试，4xx 不重试；批量任务单条失败被隔离，不影响其他任务。
+
+## 官方文档
+
+- [Agnes Video 2.5 Flash](https://www.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash)
