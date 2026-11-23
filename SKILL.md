@@ -77,7 +77,7 @@ description: "Agnes AI 全能力套件，统一入口 agnes-skills，按诉求�
 - **后台读不到 Key**：隔离/沙箱会把脚本复制到缓存目录执行，`__file__` 指向副本，`load_env` 沿脚本目录向上找 `.env` 落空；`AGNES_ENV_FILE` 指向的真实 `.env` 在后台也可能打不开（`OSError` 被静默）。兜底：启动前从套件根 `.env` 解析 `AGNES_API_KEY` 注入进程环境变量，不要回显 Key。
 - **内置后台线程下载会被中断**：早期单结果脚本用 `daemon=True` 线程下载，生成脚本 `main` 返回、进程退出时守护线程被直接终止，文件落不完。现已改为生成脚本只回 URL、下载交给独立 `download.py` 进程；不要再在生成脚本内起线程下载。
 - **轮询等待口径**：视频轮询固定 2 秒一轮（非累加退避）；请求失败重试才走指数退避。长等待主要来自服务端排队出片，本地无法压缩。
-- **下载代理（参数控制，自动探测 + 可强制关闭）**：`download_media(..., use_proxy=True)`，默认 `True` 自动探测——合并环境变量代理（`HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY`）与 Windows 系统代理（注册表 `Internet Settings`），有代理走代理、没有代理直连；传 `use_proxy=False` 强制直连、忽略一切代理。命令行入口 `download.py` 对应开关 `--no-proxy`。代理端口不通时走原有瞬态重试，不崩溃；非 Windows 只读环境变量代理。
+- **下载代理（参数控制，自动探测 + 可强制关闭）**：`download_media(..., use_proxy=True)`，默认 `True` 自动探测——合并环境变量代理（`HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY`）与系统代理：Windows 读注册表 `Internet Settings`，macOS 由标准库经 `scutil` 读取，Linux 仅读环境变量；有代理走代理、没有代理直连；传 `use_proxy=False` 强制直连、忽略一切代理。命令行入口 `download.py` 对应开关 `--no-proxy`。代理端口不通时走原有瞬态重试，不崩溃。
 
 ### 耗时边界（供判断）
 

@@ -60,7 +60,7 @@ def _opener(use_proxy=True):
     """构造下载 opener。
 
     - `use_proxy=False`：显式空 ProxyHandler，禁用一切代理，直连。
-    - `use_proxy=True`：合并环境变量代理与 Windows 系统代理；都没有则默认 opener（直连）。
+    - `use_proxy=True`：合并标准库探测到的代理（环境变量；macOS 系统代理经 scutil）与 Windows 注册表代理；都没有则默认 opener（直连）。Linux 仅读环境变量。
     """
     if not use_proxy:
         return urllib.request.build_opener(urllib.request.ProxyHandler({}))
