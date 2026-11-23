@@ -20,6 +20,7 @@ import load_env
 
 
 def _post(url, payload):
+    load_env.load_env()
     api_key = load_env.api_key()
     req = urllib.request.Request(
         url,
@@ -51,6 +52,7 @@ def submit(payload):
 
 def poll(video_id, model_name, interval=2, max_seconds=600):
     """Poll /agnesapi until completed or failed; return final response."""
+    load_env.load_env()
     base = load_env.base_url().replace("/v1", "")
     api_key = load_env.api_key()
     deadline = time.time() + max_seconds
