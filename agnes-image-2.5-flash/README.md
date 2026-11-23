@@ -11,7 +11,7 @@ Agnes Image 2.5 Flash 图像生成、图生图与多图合成。
 
 ```bash
 python examples/text-to-image.py "江南古镇清晨，石桥河面，白墙黑瓦间炊烟升起，水墨质感" "1K" "16:9"
-python examples/image-to-image.py "C:/work/source.png" "保留姿态构图，背景换成雪后初晴的古镇茶馆，暖调胶片" "1K" "16:9"
+python examples/image-to-image.py "./source.png" "保留姿态构图，背景换成雪后初晴的古镇茶馆，暖调胶片" "1K" "16:9"
 python examples/multi-image-combine.py "https://example.com/c1.png" "https://example.com/c2.png" "两位人物同处一张茶席，竹帘背景，淡彩国风"
 
 # 单结果只回 URL；拿到 URL 后另起独立进程下载到本地

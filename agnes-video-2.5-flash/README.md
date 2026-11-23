@@ -12,8 +12,8 @@ Agnes Video 2.5 Flash 轻量异步视频生成：文生视频、首尾帧、图�
 ```bash
 python examples/text-to-video.py "海边栈道上白鹭收翅落在栏杆，海浪拍岸，固定长镜头，清晨薄雾"
 python examples/keyframe-video.py "https://example.com/first.png" "https://example.com/last.png" "人物回身整理衣袖，缓步走到廊下，镜头缓慢推进" "12"
-python examples/image-reference.py "C:/work/character.png" "以 <Picture 1> 造型为准，在春日庭院折下一枝柳条，近景跟随" "12" "16:9"
-python examples/audio-reference.py "C:/work/bgm.mp3" "跟随 <Audio 1> 的节奏安排镜头长短，傍晚河岸步道行人经过" "12" "16:9"
+python examples/image-reference.py "./character.png" "以 <Picture 1> 造型为准，在春日庭院折下一枝柳条，近景跟随" "12" "16:9"
+python examples/audio-reference.py "./bgm.mp3" "跟随 <Audio 1> 的节奏安排镜头长短，傍晚河岸步道行人经过" "12" "16:9"
 
 # 单结果只回 URL；拿到 URL 后另起独立进程下载到本地
 python examples/download.py "<成片URL>" output/videos
