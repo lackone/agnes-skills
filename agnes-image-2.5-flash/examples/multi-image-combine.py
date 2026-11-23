@@ -11,6 +11,7 @@ import sys
 
 import http_retry
 import load_env
+import media_download
 import media_input
 
 
@@ -54,6 +55,7 @@ def main():
         sys.exit(1)
     print("[完成] 多图合成结束")
     print(f"图片地址：{image_url}")
+    media_download.spawn_download(image_url, "output/images", 0)
 
 if __name__ == "__main__":
     main()

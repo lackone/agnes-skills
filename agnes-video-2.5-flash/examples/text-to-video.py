@@ -7,7 +7,6 @@
 """
 import argparse
 import sys
-import threading
 
 import media_download
 import video_common
@@ -49,16 +48,8 @@ def main():
     print("[完成] 视频已生成")
     print(f"视频地址：{url}")
 
-    def _save():
-        try:
-            path = media_download.download_media(url, "output/videos", 0)
-            print(f"[下载] 视频已保存：{path}")
-        except Exception as exc:
-            print(f"[下载失败] {exc}")
-
-    thread = threading.Thread(target=_save, daemon=True)
-    thread.start()
-    thread.join()
+    # 后台异步下载，不阻塞 URL 交付；主线程打印地址后即返回。
+    media_download.spawn_download(url, "output/videos", 0)
 
 if __name__ == "__main__":
     main()

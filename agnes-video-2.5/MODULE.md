@@ -110,17 +110,22 @@ description: Agnes Video 2.5 异步视频生成，支持文生视频、首尾帧
 
 | 脚本 | 用途 | 参数 |
 |---|---|---|
-| `text-to-video.py` | 文生视频 | `[提示词] [时长] [尺寸] [画幅]` |
-| `keyframe-video.py` | 首尾帧控制 | `[首帧] [尾帧] [提示词] [时长]` |
-| `image-reference.py` | 图片参考 | `[图片1,图片2,...] [提示词] [尺寸] [画幅]` |
-| `audio-reference.py` | 音频参考 | `[音频1,音频2,...] [提示词] [尺寸] [画幅]` |
-| `video-reference.py` | 视频参考 | `[参考视频URL] [提示词] [时长] [起始秒数]` |
-| `query-video.py` | 查询已有任务 | `<video_id>` |
+| `text-to-video.py` | 文生视频（后台下载） | `[提示词] [时长] [尺寸] [画幅]` |
+| `keyframe-video.py` | 首尾帧控制（后台下载） | `[首帧] [尾帧] [提示词] [时长]` |
+| `image-reference.py` | 图片参考（后台下载） | `[图片1,图片2,...] [提示词] [尺寸] [画幅]` |
+| `audio-reference.py` | 音频参考（后台下载） | `[音频1,音频2,...] [提示词] [尺寸] [画幅]` |
+| `video-reference.py` | 视频参考（后台下载） | `[参考视频URL] [提示词] [时长] [起始秒数]` |
+| `query-video.py` | 查询已有任务（只回 URL，不落盘） | `<video_id>` |
 | `batch-videos.py` | 批量并发生成 + 后台下载 | `--request <json|-> [--concurrency N] [--output DIR] [--no-download]` |
+
+## 默认参数与交付顺序
+
+- 用户未指定时：`720P`、比例 `16:9`、时长 `5` 秒；用户显式给出的时长 / 尺寸 / 比例以用户输入为准。
+- 生成类脚本（文生、首尾帧、各类参考）返回成片 URL 后，先把 URL 发到对话框展示；本地下载放后台线程异步进行，不阻塞回复；下载完成后再展示本地路径，下载失败单独提示。`query-video.py` 仅查询状态，只回 URL、不落盘。
 
 ## 批量生成与本地下载
 
-- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`size`/`aspect_ratio` 及可选 `images`/`audios`/`videos`），默认按任务数开线程并发提交并轮询（一条任务一个线程），`--concurrency` 可限制上限；任务一完成先打印 URL，下载在后台线程进行，不阻塞 URL 交付。
+- `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`size`/`aspect_ratio` 及可选 `images`/`audios`/`videos`），线程池并发提交并轮询，默认最多 4 个并发，`--concurrency` 可覆盖；任务一完成先打印 URL，并立即进入下载池与其余生成并行，不阻塞 URL 交付。
 - 下载由 `media_download.py` 完成：流式写入 `--output` 目录（默认 `output/batch-videos`），单文件默认上限 512 MiB，瞬态错误有限重试；扩展名取 Content-Type，回退到 URL 后缀。
 - `--no-download` 只返回 URL，不落盘。
 

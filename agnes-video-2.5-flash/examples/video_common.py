@@ -53,7 +53,6 @@ def poll(video_id, model_name, interval=2, max_seconds=600):
     deadline = time.time() + max_seconds
     attempt = 0
     while time.time() < deadline:
-        time.sleep(interval)
         attempt += 1
         query = urllib.parse.urlencode({"video_id": video_id, "model_name": model_name})
         req = urllib.request.Request(
@@ -65,16 +64,19 @@ def poll(video_id, model_name, interval=2, max_seconds=600):
         except http_retry.HttpError as exc:
             if exc.status in http_retry.RETRYABLE_STATUS:
                 print(f"poll {attempt} 瞬态错误 {exc.status}，下一轮继续：{exc}")
+                time.sleep(interval)
                 continue
             raise SystemExit(str(exc))
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             print(f"poll {attempt} 网络抖动，下一轮继续：{exc}")
+            time.sleep(interval)
             continue
         status = result.get("status")
         progress = result.get("progress", 0)
         print(f"[{attempt}] status={status} progress={progress}")
         if status in ("completed", "failed"):
             return result
+        time.sleep(interval)
     raise SystemExit("轮询超时")
 
 

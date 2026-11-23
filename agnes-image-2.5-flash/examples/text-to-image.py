@@ -8,7 +8,6 @@
 import argparse
 import json
 import sys
-import threading
 
 import http_retry
 import load_env
@@ -51,16 +50,8 @@ def main():
     print("[完成] 图片已生成")
     print(f"图片地址：{image_url}")
 
-    def _save():
-        try:
-            path = media_download.download_media(image_url, "output/images", 0)
-            print(f"[下载] 图片已保存：{path}")
-        except Exception as exc:
-            print(f"[下载失败] {exc}")
-
-    thread = threading.Thread(target=_save, daemon=True)
-    thread.start()
-    thread.join()
+    # 后台异步下载，不阻塞 URL 交付；主线程打印地址后即返回。
+    media_download.spawn_download(image_url, "output/images", 0)
 
 if __name__ == "__main__":
     main()
