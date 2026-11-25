@@ -117,7 +117,7 @@ description: Agnes Video 2.5 异步视频生成，支持文生视频、首尾帧
 | `video-reference.py` | 视频参考（只回 URL） | `[参考视频URL] [提示词] [时长] [尺寸] [画幅] [起始秒数]` |
 | `query-video.py` | 查询已有任务（只回 URL，不落盘） | `<video_id>` |
 | `batch-videos.py` | 批量并发生成（只回 URL） | `--request <json|-> [--concurrency N]` |
-| `download.py` | 独立下载进程（调度方后台拉起） | `<url> <out_dir> [index]` |
+| `download.py` | 独立下载进程（调度方后台拉起） | `<url> [out_dir] [index]` |
 
 ## 默认参数与交付顺序
 
@@ -128,7 +128,7 @@ description: Agnes Video 2.5 异步视频生成，支持文生视频、首尾帧
 ## 批量生成与本地下载
 
 - `batch-videos.py` 读取 JSON 数组（每项含 `prompt`/`seconds`/`size`/`aspect_ratio` 及可选 `images`/`audios`/`videos`），线程池并发提交并轮询，默认最多 4 个并发，`--concurrency` 可覆盖；脚本不在进程内下载，逐条进度写 stderr，stdout 只输出一份汇总 JSON `{"ok": true, "results": [...]}`。
-- 落盘由调度方逐条另起独立 `download.py <url> output/batch-videos <index>` 后台进程完成，与生成进程解耦；下载逻辑复用 `media_download.py`，流式写入，单文件默认上限 512 MiB，瞬态错误有限重试，扩展名取 Content-Type，回退到 URL 后缀。
+- 落盘由调度方逐条另起独立 `download.py <url> <videos 绝对路径> <index>` 后台进程完成，与生成进程解耦；下载逻辑复用 `media_download.py`，流式写入，单文件默认上限 512 MiB，瞬态错误有限重试，扩展名取 Content-Type，回退到 URL 后缀。
 
 ## 错误处理与重试
 

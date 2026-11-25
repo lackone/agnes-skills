@@ -15,11 +15,11 @@ python examples/image-to-image.py "./source.png" "保留姿态构图，背景换
 python examples/multi-image-combine.py "https://example.com/c1.png" "https://example.com/c2.png" "两位人物同处一张茶席，竹帘背景，淡彩国风"
 
 # 单结果只回 URL；拿到 URL 后另起独立进程下载到本地
-python examples/download.py "<成片URL>" output/images
+python examples/download.py "<成片URL>" "<images 绝对路径>"
 
 # 批量并发：JSON 数组请求，只回 URL；落盘逐条用独立 download.py
 python examples/batch-images.py --request prompts.json
-python examples/download.py "<成片URL>" output/images <序号>
+python examples/download.py "<成片URL>" "<images 绝对路径>" <序号>
 ```
 
 参数均为可选位置参数，缺省走内置演示；`-h/--help` 查看参数说明。

@@ -3,7 +3,7 @@
 
 stdout 仅输出一个结果 JSON（含本地 path）；进度与提示走 stderr。
 
-用法：python text-to-image-base64.py [提示词] [尺寸]
+用法：python text-to-image-base64.py [提示词] [尺寸] [--out-dir 绝对路径]
 """
 import argparse
 import base64
@@ -20,6 +20,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="文生图（Base64 输出）：agnes-image-2.5-flash")
     parser.add_argument("prompt", nargs="?", default="极简木质书架特写，午后阳光斜照在一排书脊上，尘埃在光束里浮动，安静温暖，方形构图", help="生成指令")
     parser.add_argument("size", nargs="?", default="1K", choices=["1K", "2K", "3K", "4K"], help="尺寸档位")
+    parser.add_argument("--out-dir", default="images", help="保存目录（默认 images/，相对当前工作目录；调用方应传绝对路径）")
     return parser.parse_args()
 
 
@@ -43,7 +44,7 @@ def main():
         if not b64:
             raise ValueError("未返回 Base64 图像")
 
-        out_dir = os.path.join("output", "images")
+        out_dir = args.out_dir
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, f"image-{int(time.time() * 1000)}.png")
         with open(out_path, "wb") as handle:
@@ -52,7 +53,7 @@ def main():
         print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
         sys.exit(1)
 
-    print(json.dumps({"ok": True, "path": out_path}, ensure_ascii=False))
+    print(json.dumps({"ok": True, "path": os.path.abspath(out_path)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

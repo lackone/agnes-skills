@@ -8,7 +8,8 @@ __pycache__/
 *.pyo
 
 # Local generation state / downloaded media (keep the suite source clean)
-output/
+images/
+videos/
 state.json
 response.json
 manifest.json

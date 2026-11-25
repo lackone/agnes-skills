@@ -16,11 +16,11 @@ python examples/image-reference.py "./character.png" "以 <Picture 1> 造型为�
 python examples/audio-reference.py "./bgm.mp3" "跟随 <Audio 1> 的节奏安排镜头长短，傍晚河岸步道行人经过" "12" "16:9"
 
 # 单结果只回 URL；拿到 URL 后另起独立进程下载到本地
-python examples/download.py "<成片URL>" output/videos
+python examples/download.py "<成片URL>" "<videos 绝对路径>"
 
 # 批量并发：JSON 数组请求，只回 URL；落盘逐条用独立 download.py
 python examples/batch-videos.py --request jobs.json
-python examples/download.py "<成片URL>" output/videos <序号>
+python examples/download.py "<成片URL>" "<videos 绝对路径>" <序号>
 ```
 
 参数均为可选位置参数，缺省走内置演示；`-h/--help` 查看参数说明。
